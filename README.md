@@ -1,5 +1,7 @@
 # ebook-zoom-modes
 
+[![rm1](https://img.shields.io/badge/rM1-supported-green)](https://remarkable.com/store/remarkable)
+[![rm2](https://img.shields.io/badge/rM2-supported-green)](https://remarkable.com/store/remarkable-2)
 [![rmpp](https://img.shields.io/badge/rMPP-supported-green)](https://remarkable.com/store/overview/remarkable-paper-pro)
 [![rmppmove](https://img.shields.io/badge/rMPPMove-supported-green)](https://remarkable.com/products/remarkable-paper/pro-move)
 [![rmppure](https://img.shields.io/badge/rMPPure-supported-green)](https://remarkable.com/products/remarkable-paper/pure)
@@ -18,8 +20,9 @@ xochitl applies a document's zoom mode only to PDFs. An ebook always opens at a 
 ### Manual
 
 1. Ensure xovi is installed
-2. Download `ebook-zoom-modes.so` from the [latest release](https://github.com/rmitchellscott/rm-ebook-zoom-modes/releases/latest) and place it in `/home/root/xovi/extensions.d/`
-3. Restart xovi
+2. Download the build for your device from the [latest release](https://github.com/rmitchellscott/rm-ebook-zoom-modes/releases/latest): `ebook-zoom-modes-aarch64.so` for the Paper Pro, Paper Pro Move and Paper Pure, or `ebook-zoom-modes-armv7.so` for the reMarkable 1 and 2
+3. Place it in `/home/root/xovi/extensions.d/` on your reMarkable, renamed to `ebook-zoom-modes.so`
+4. Restart xovi
 
 The QML patch that shows the Adjust View menu on ebooks is built into the extension. 
 

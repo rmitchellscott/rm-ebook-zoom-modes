@@ -13,8 +13,19 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - arch: aarch64
+            image: eeems/remarkable-toolchain:5.8.203-aarch64
+            sdk: /opt/codex/chiappa
+            cc_variable: CC_AARCH64
+          - arch: armv7
+            image: eeems/remarkable-toolchain:5.8.203-armv7
+            sdk: /opt/codex/rm1
+            cc_variable: CC_ARMV7
     container:
-      image: eeems/remarkable-toolchain:5.8.203-aarch64
+      image: ${{ matrix.image }}
 
     steps:
       - name: Checkout
@@ -28,22 +39,22 @@ jobs:
           mv xovi-* xovi-repo
           rm xovi.tar.gz
 
-      - name: Build aarch64
+      - name: Build ${{ matrix.arch }}
         shell: bash
         env:
           VERSION: ${{ github.ref_name }}
         run: |
-          . "$(find /opt/codex/chiappa -name 'environment-setup-*' -type f | head -n1)"
-          make ebook-zoom-modes.so \
-            CC_AARCH64="$CC" \
+          . "$(find ${{ matrix.sdk }} -name 'environment-setup-*' -type f | head -n1)"
+          make ebook-zoom-modes-${{ matrix.arch }}.so \
+            ${{ matrix.cc_variable }}="$CC" \
             XOVI_REPO="$GITHUB_WORKSPACE/xovi-repo" \
             VERSION="$VERSION"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ebook-zoom-modes
-          path: ebook-zoom-modes.so
+          name: ebook-zoom-modes-${{ matrix.arch }}
+          path: ebook-zoom-modes-${{ matrix.arch }}.so
           retention-days: 90
 
   release:
@@ -74,7 +85,13 @@ jobs:
 
           ## Device Compatibility
 
-          - **reMarkable Paper Pro, Paper Pro Move and Paper Pure**: `ebook-zoom-modes.so`
+          - **reMarkable Paper Pro**: `ebook-zoom-modes-aarch64.so`
+          - **reMarkable Paper Pro Move**: `ebook-zoom-modes-aarch64.so`
+          - **reMarkable Paper Pure**: `ebook-zoom-modes-aarch64.so`
+          - **reMarkable 2**: `ebook-zoom-modes-armv7.so`
+          - **reMarkable 1**: `ebook-zoom-modes-armv7.so`
+
+          Rename the file to `ebook-zoom-modes.so` when installing it by hand.
           EOF
 
       - name: Commit changelog
@@ -92,10 +109,17 @@ jobs:
       - name: Download aarch64 artifact
         uses: actions/download-artifact@v4
         with:
-          name: ebook-zoom-modes
+          name: ebook-zoom-modes-aarch64
+
+      - name: Download armv7 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ebook-zoom-modes-armv7
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: ebook-zoom-modes.so
+          files: |
+            ebook-zoom-modes-aarch64.so
+            ebook-zoom-modes-armv7.so
           body_path: RELEASE_NOTES.md

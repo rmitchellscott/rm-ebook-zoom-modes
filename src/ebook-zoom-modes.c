@@ -22,6 +22,7 @@ struct MaskedInstruction {
     uint32_t mask;
 };
 
+#if defined(__aarch64__)
 #define LOAD_FILE_TYPE {0xb9422800, 0xfffffc00}          // ldr  wT, [xN, #0x228]
 #define COMPARE_WITH_PDF {0x7100081f, 0xfffffc1f}        // cmp  wN, #2
 #define COMPARE_WITH_EBOOK {0x71000c1f, 0xfffffc1f}      // cmp  wN, #3
@@ -31,6 +32,19 @@ struct MaskedInstruction {
 #define MOVE_ONE {0x52800020, 0xffffffe0}                // mov  wD, #1
 #define LOAD_DOCUMENT {0xf940cc00, 0xfffffc00}           // ldr  xT, [xN, #0x198]
 #define LOAD_CONTENT_RECT {0xf9408400, 0xfffffc00}       // ldr  xT, [xN, #0x108]
+#elif defined(__arm__)
+#define LOAD_FILE_TYPE {0xe5900148, 0xfff00fff}          // ldr  rT, [rN, #0x148]
+#define COMPARE_WITH_PDF {0xe3500002, 0xfff0ffff}        // cmp  rN, #2
+#define COMPARE_WITH_EBOOK {0xe3500003, 0xfff0ffff}      // cmp  rN, #3
+#define BRANCH_IF_EQUAL {0x0a000000, 0xff000000}         // beq
+#define BRANCH_IF_NOT_EQUAL {0x1a000000, 0xff000000}     // bne
+#define ANY_CONDITIONAL_BRANCH {0x0a000000, 0x0f000000}  // b<cond>
+#define MOVE_ONE {0xe3a00001, 0xffff0fff}                // mov  rD, #1
+#define LOAD_DOCUMENT {0xe5900138, 0xfff00fff}           // ldr  rT, [rN, #0x138]
+#define LOAD_CONTENT_RECT {0xe59000cc, 0xfff00fff}       // ldr  rT, [rN, #0xcc]
+#else
+#error "unsupported architecture"
+#endif
 
 #define CONDITION_GREATER_OR_EQUAL 0xa
 #define CONDITION_LESS_THAN 0xb
@@ -39,7 +53,7 @@ static const struct MaskedInstruction zoomModeCalculatorGate[] = {
     LOAD_FILE_TYPE, COMPARE_WITH_PDF, BRANCH_IF_EQUAL, MOVE_ONE,
 };
 static const struct MaskedInstruction defaultFocalPointGate[] = {
-    LOAD_FILE_TYPE, COMPARE_WITH_PDF, BRANCH_IF_EQUAL, COMPARE_WITH_EBOOK, ANY_CONDITIONAL_BRANCH,
+    LOAD_DOCUMENT, LOAD_FILE_TYPE, COMPARE_WITH_PDF, BRANCH_IF_EQUAL, COMPARE_WITH_EBOOK, ANY_CONDITIONAL_BRANCH,
 };
 static const struct MaskedInstruction updatePolishGate[] = {
     LOAD_DOCUMENT, LOAD_FILE_TYPE, COMPARE_WITH_PDF, BRANCH_IF_NOT_EQUAL, LOAD_CONTENT_RECT,
@@ -58,7 +72,7 @@ struct FileTypeGate {
 
 static const struct FileTypeGate fileTypeGates[] = {
     GATE("zoom mode calculator", zoomModeCalculatorGate, 2, CONDITION_GREATER_OR_EQUAL),
-    GATE("default focal point", defaultFocalPointGate, 2, CONDITION_GREATER_OR_EQUAL),
+    GATE("default focal point", defaultFocalPointGate, 3, CONDITION_GREATER_OR_EQUAL),
     GATE("updatePolish", updatePolishGate, 3, CONDITION_LESS_THAN),
 };
 #define FILE_TYPE_GATE_COUNT (sizeof(fileTypeGates) / sizeof(fileTypeGates[0]))
@@ -115,7 +129,11 @@ static uint32_t *findUniqueGate(const struct CodeRange *code, const struct FileT
 
 static uint32_t withCondition(uint32_t conditionalBranch, uint32_t condition)
 {
+#if defined(__aarch64__)
     return (conditionalBranch & ~0xfu) | condition;
+#else
+    return (conditionalBranch & 0x0fffffffu) | (condition << 28);
+#endif
 }
 
 static int writeInstruction(uint32_t *location, uint32_t instruction)
