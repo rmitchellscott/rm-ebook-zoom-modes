@@ -40,7 +40,7 @@ struct MaskedInstruction {
 #define BRANCH_IF_NOT_EQUAL {0x1a000000, 0xff000000}     // bne
 #define ANY_CONDITIONAL_BRANCH {0x0a000000, 0x0f000000}  // b<cond>
 #define MOVE_ONE {0xe3a00001, 0xffff0fff}                // mov  rD, #1
-#define LOAD_DOCUMENT {0xe5900138, 0xfff00fff}           // ldr  rT, [rN, #0x138]
+#define LOAD_DOCUMENT {0xe590013c, 0xfff00fff}           // ldr  rT, [rN, #0x13c]
 #define LOAD_CONTENT_RECT {0xe59000cc, 0xfff00fff}       // ldr  rT, [rN, #0xcc]
 #else
 #error "unsupported architecture"
